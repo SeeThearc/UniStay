@@ -1,64 +1,79 @@
-import { Bell, User, LogOut } from 'lucide-react';
+import { Bell, User, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useState } from 'react';
 
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
 
+  const roleColors = {
+    admin: 'bg-indigo-100 text-indigo-700',
+    warden: 'bg-teal-100 text-teal-700',
+    student: 'bg-blue-100 text-blue-700',
+  };
+  const badgeColor = roleColors[user?.role] || 'bg-slate-100 text-slate-600';
+
   return (
-    <nav className="bg-white shadow-md px-6 py-4">
+    <header className="bg-white border-b border-slate-100 px-6 py-3 shadow-sm">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary-600">
-            Smart Hostel Management
-          </h1>
+        {/* Logo / App name */}
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center">
+            <span className="text-white font-bold text-sm">H</span>
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-slate-800 leading-none">UniStay</h1>
+            <p className="text-xs text-slate-400 leading-none mt-0.5">Smart Hostel Management</p>
+          </div>
         </div>
 
-        <div className="flex items-center space-x-4">
+        {/* Right actions */}
+        <div className="flex items-center gap-2">
           {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-full">
-            <Bell className="h-6 w-6" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+          <button className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors">
+            <Bell className="h-5 w-5" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 bg-rose-500 rounded-full ring-2 ring-white" />
           </button>
 
-          {/* User dropdown */}
+          {/* User info */}
           <div className="relative">
             <button
               onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-lg"
+              className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-200"
             >
-              <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-primary-600" />
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
+                {user?.name?.[0]?.toUpperCase()}
               </div>
               <div className="text-left hidden md:block">
-                <p className="text-sm font-medium text-gray-700">{user?.name}</p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="text-sm font-semibold text-slate-800 leading-none">{user?.name}</p>
+                <span className={`inline-block text-xs font-medium px-1.5 py-0.5 rounded capitalize mt-0.5 ${badgeColor}`}>
+                  {user?.role}
+                </span>
               </div>
+              <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-50">
-                <div className="px-4 py-2 border-b">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
+                <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-slate-100 py-2 z-50">
+                  <div className="px-4 py-3 border-b border-slate-100">
+                    <p className="text-sm font-semibold text-slate-900">{user?.name}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 truncate">{user?.email}</p>
+                  </div>
+                  <div className="px-3 py-2">
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-xl">
+                      <User className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm text-slate-600">Profile</span>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  onClick={() => {
-                    logout();
-                    setShowDropdown(false);
-                  }}
-                  className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </button>
-              </div>
+              </>
             )}
           </div>
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

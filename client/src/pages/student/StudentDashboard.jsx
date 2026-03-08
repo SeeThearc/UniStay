@@ -1,27 +1,36 @@
 import { useState, useEffect } from 'react';
-import { Home, MessageSquare, Calendar, DollarSign } from 'lucide-react';
+import { Home, MessageSquare, Calendar, IndianRupee, ArrowUpRight, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from '../../api/axios';
 import Loader from '../../components/common/Loader';
 import { formatDate, formatCurrency, getStatusColor } from '../../utils/constants';
 
+const QuickCard = ({ to, icon: Icon, label, value, sub, accent }) => (
+  <Link to={to} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 hover:shadow-md hover:-translate-y-0.5 transition-all group">
+    <div className="flex items-start justify-between mb-3">
+      <div className={`p-2.5 rounded-xl ${accent}`}>
+        <Icon className="h-4 w-4 text-white" />
+      </div>
+      <ArrowUpRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors" />
+    </div>
+    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+    <p className="text-xl font-bold text-slate-800 mt-0.5">{value}</p>
+    {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+  </Link>
+);
+
 const StudentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useEffect(() => { fetchDashboardData(); }, []);
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get('/dashboard/student');
-      setDashboardData(response.data.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
+      const r = await axios.get('/dashboard/student');
+      setDashboardData(r.data.data);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   if (loading) return <Loader fullScreen />;
@@ -30,190 +39,173 @@ const StudentDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Welcome, {profile.name}!</h1>
-        <p className="text-gray-600 mt-2">Here's your hostel dashboard</p>
-      </div>
-
-      {/* Profile Overview */}
-      <div className="card bg-gradient-to-r from-primary-500 to-primary-600 text-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div>
-            <p className="text-sm opacity-90">Student ID</p>
-            <p className="text-lg font-semibold">{profile.studentId}</p>
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-violet-600 rounded-2xl p-6 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/5" />
+        <div className="absolute bottom-0 right-28 h-24 w-24 rounded-full bg-white/5" />
+        <div className="relative flex items-center gap-5">
+          <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center shrink-0">
+            <span className="text-white text-xl font-bold">{profile.name?.[0]?.toUpperCase()}</span>
           </div>
           <div>
-            <p className="text-sm opacity-90">Email</p>
-            <p className="text-lg font-semibold">{profile.email}</p>
+            <p className="text-white/70 text-sm">Welcome back,</p>
+            <h1 className="text-2xl font-bold text-white">{profile.name} 👋</h1>
           </div>
-          <div>
-            <p className="text-sm opacity-90">Phone</p>
-            <p className="text-lg font-semibold">{profile.phoneNumber || 'Not provided'}</p>
-          </div>
-          <div>
-            <p className="text-sm opacity-90">Room</p>
-            <p className="text-lg font-semibold">
-              {roomDetails ? `Room ${roomDetails.roomNumber}` : 'Not assigned'}
-            </p>
-          </div>
+        </div>
+        {/* Profile info chips */}
+        <div className="relative mt-5 flex flex-wrap gap-3">
+          {[
+            { label: 'Student ID', value: profile.studentId },
+            { label: 'Room', value: roomDetails ? `Room ${roomDetails.roomNumber}` : 'Not assigned' },
+            { label: 'Phone', value: profile.phoneNumber || 'Not provided' },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2 border border-white/20">
+              <p className="text-white/60 text-xs">{label}</p>
+              <p className="text-white text-sm font-semibold">{value}</p>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Link to="/student/room" className="stat-card border-l-blue-500 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">My Room</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {roomDetails ? roomDetails.roomNumber : 'N/A'}
-              </p>
-            </div>
-            <Home className="h-8 w-8 text-blue-600" />
-          </div>
-        </Link>
-
-        <Link to="/student/complaints" className="stat-card border-l-yellow-500 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">My Complaints</p>
-              <p className="text-2xl font-bold text-gray-900">{complaintStats.total}</p>
-              <p className="text-xs text-gray-500">{complaintStats.pending} pending</p>
-            </div>
-            <MessageSquare className="h-8 w-8 text-yellow-600" />
-          </div>
-        </Link>
-
-        <Link to="/student/leaves" className="stat-card border-l-purple-500 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">My Leaves</p>
-              <p className="text-2xl font-bold text-gray-900">{leaveStats.total}</p>
-              <p className="text-xs text-gray-500">{leaveStats.pending} pending</p>
-            </div>
-            <Calendar className="h-8 w-8 text-purple-600" />
-          </div>
-        </Link>
-
-        <Link to="/student/fees" className="stat-card border-l-green-500 hover:shadow-lg transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Fee Status</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {feeDetails ? feeDetails.status : 'N/A'}
-              </p>
-            </div>
-            <DollarSign className="h-8 w-8 text-green-600" />
-          </div>
-        </Link>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <QuickCard to="/student/room" icon={Home} label="My Room"
+          value={roomDetails ? roomDetails.roomNumber : 'N/A'}
+          sub={roomDetails ? `Block ${roomDetails.block}` : 'Not assigned'}
+          accent="bg-blue-500" />
+        <QuickCard to="/student/complaints" icon={MessageSquare} label="Complaints"
+          value={complaintStats.total}
+          sub={`${complaintStats.pending} pending`}
+          accent="bg-amber-500" />
+        <QuickCard to="/student/leaves" icon={Calendar} label="Leave Requests"
+          value={leaveStats.total}
+          sub={`${leaveStats.pending} pending`}
+          accent="bg-violet-500" />
+        <QuickCard to="/student/fees" icon={IndianRupee} label="Fee Status"
+          value={feeDetails ? feeDetails.status : 'N/A'}
+          sub={feeDetails ? formatCurrency(feeDetails.remainingDues) + ' dues' : ''}
+          accent="bg-emerald-500" />
       </div>
+
+      {/* Fee Summary */}
+      {feeDetails && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <IndianRupee className="h-4 w-4 text-indigo-500" />
+            <h3 className="text-sm font-bold text-slate-700">Fee Summary</h3>
+            <Link to="/student/fees" className="ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              Details <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Total Fee', value: formatCurrency(feeDetails.totalFee), color: 'text-slate-800' },
+              { label: 'Amount Paid', value: formatCurrency(feeDetails.amountPaid), color: 'text-emerald-600' },
+              { label: 'Remaining', value: formatCurrency(feeDetails.remainingDues), color: 'text-rose-600' },
+              { label: 'Status', value: feeDetails.status, color: '' },
+            ].map(({ label, value, color }) => (
+              <div key={label} className="bg-slate-50 rounded-xl p-3">
+                <p className="text-xs text-slate-500 mb-1">{label}</p>
+                {label === 'Status' ? (
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusColor(value)}`}>{value}</span>
+                ) : (
+                  <p className={`text-base font-bold ${color}`}>{value}</p>
+                )}
+              </div>
+            ))}
+          </div>
+          {/* Progress bar */}
+          <div className="mt-4">
+            <div className="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Payment progress</span>
+              <span>{feeDetails.totalFee > 0 ? ((feeDetails.amountPaid / feeDetails.totalFee) * 100).toFixed(1) : 0}%</span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-2">
+              <div
+                className="bg-indigo-500 h-2 rounded-full transition-all duration-700"
+                style={{ width: `${feeDetails.totalFee > 0 ? Math.min((feeDetails.amountPaid / feeDetails.totalFee) * 100, 100) : 0}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Room Details */}
       {roomDetails && (
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Room Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Room Number</p>
-              <p className="font-medium">{roomDetails.roomNumber}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Block</p>
-              <p className="font-medium">{roomDetails.block}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Floor</p>
-              <p className="font-medium">{roomDetails.floor}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Occupancy</p>
-              <p className="font-medium">{roomDetails.occupants?.length} / {roomDetails.capacity}</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Fee Details */}
-      {feeDetails && (
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Fee Details</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-gray-600">Total Fee</p>
-              <p className="text-xl font-bold text-gray-900">{formatCurrency(feeDetails.totalFee)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Amount Paid</p>
-              <p className="text-xl font-bold text-green-600">{formatCurrency(feeDetails.amountPaid)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Remaining Dues</p>
-              <p className="text-xl font-bold text-red-600">{formatCurrency(feeDetails.remainingDues)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Status</p>
-              <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(feeDetails.status)}`}>
-                {feeDetails.status}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Complaints */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Recent Complaints</h3>
-            <Link to="/student/complaints" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-              View All
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Home className="h-4 w-4 text-blue-500" />
+            <h3 className="text-sm font-bold text-slate-700">Room Information</h3>
+            <Link to="/student/room" className="ml-auto text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+              Details <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="space-y-3">
-            {recentComplaints.length > 0 ? (
-              recentComplaints.map((complaint) => (
-                <div key={complaint._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{complaint.title}</p>
-                    <p className="text-xs text-gray-500">{formatDate(complaint.createdAt)}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
-                    {complaint.status}
-                  </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Room Number', value: roomDetails.roomNumber },
+              { label: 'Block', value: roomDetails.block },
+              { label: 'Floor', value: roomDetails.floor },
+              { label: 'Occupancy', value: `${roomDetails.occupants?.length} / ${roomDetails.capacity}` },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-slate-50 rounded-xl p-3">
+                <p className="text-xs text-slate-500 mb-1">{label}</p>
+                <p className="text-sm font-bold text-slate-800">{value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Complaints */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-amber-500" />
+              <h3 className="text-sm font-bold text-slate-700">Recent Complaints</h3>
+            </div>
+            <Link to="/student/complaints" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5">
+              View All <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="space-y-2">
+            {recentComplaints.length > 0 ? recentComplaints.map(c => (
+              <div key={c._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{c.title}</p>
+                  <p className="text-xs text-slate-400">{formatDate(c.createdAt)}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">No complaints yet</p>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(c.status)}`}>{c.status}</span>
+              </div>
+            )) : (
+              <p className="text-slate-400 text-sm text-center py-6">No complaints yet</p>
             )}
           </div>
         </div>
 
-        {/* Recent Leaves */}
-        <div className="card">
+        {/* Leaves */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Recent Leave Requests</h3>
-            <Link to="/student/leaves" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-              View All
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-violet-500" />
+              <h3 className="text-sm font-bold text-slate-700">Recent Leave Requests</h3>
+            </div>
+            <Link to="/student/leaves" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-0.5">
+              View All <ArrowUpRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="space-y-3">
-            {recentLeaves.length > 0 ? (
-              recentLeaves.map((leave) => (
-                <div key={leave._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{leave.numberOfDays} Days</p>
-                    <p className="text-xs text-gray-500">
-                      {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
-                    {leave.status}
-                  </span>
+          <div className="space-y-2">
+            {recentLeaves.length > 0 ? recentLeaves.map(l => (
+              <div key={l._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{l.numberOfDays} Days Leave</p>
+                  <p className="text-xs text-slate-400">{formatDate(l.fromDate)} → {formatDate(l.toDate)}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">No leave requests yet</p>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(l.status)}`}>{l.status}</span>
+              </div>
+            )) : (
+              <p className="text-slate-400 text-sm text-center py-6">No leave requests yet</p>
             )}
           </div>
         </div>

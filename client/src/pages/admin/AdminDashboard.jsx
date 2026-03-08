@@ -1,221 +1,167 @@
 import { useState, useEffect } from 'react';
-import { Users, DoorOpen, MessageSquare, DollarSign, TrendingUp, AlertCircle } from 'lucide-react';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  Users, DoorOpen, MessageSquare, IndianRupee,
+  TrendingUp, ArrowUpRight
+} from 'lucide-react';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from '../../api/axios';
 import Loader from '../../components/common/Loader';
 import { formatCurrency, getStatusColor } from '../../utils/constants';
+
+const StatCard = ({ title, value, icon: Icon, accent, sub }) => (
+  <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+    <div className="flex items-start justify-between mb-4">
+      <div className={`p-3 rounded-xl ${accent}`}>
+        <Icon className="h-5 w-5 text-white" />
+      </div>
+      <ArrowUpRight className="h-4 w-4 text-slate-300" />
+    </div>
+    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{title}</p>
+    <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
+    {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+  </div>
+);
+
+const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444'];
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  useEffect(() => { fetchDashboardData(); }, []);
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get('/dashboard/admin');
-      setDashboardData(response.data.data);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
+      const r = await axios.get('/dashboard/admin');
+      setDashboardData(r.data.data);
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   };
 
   if (loading) return <Loader fullScreen />;
 
   const { overview, feeStats, complaintsByStatus, roomsByStatus, recentComplaints, recentLeaves } = dashboardData;
 
-  const statCards = [
-    {
-      title: 'Total Students',
-      value: overview.totalStudents,
-      icon: Users,
-      color: 'bg-blue-500',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-blue-600',
-    },
-    {
-      title: 'Total Rooms',
-      value: overview.totalRooms,
-      icon: DoorOpen,
-      color: 'bg-green-500',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-600',
-    },
-    {
-      title: 'Pending Complaints',
-      value: overview.pendingComplaints,
-      icon: MessageSquare,
-      color: 'bg-yellow-500',
-      iconBg: 'bg-yellow-100',
-      iconColor: 'text-yellow-600',
-    },
-    {
-      title: 'Fee Collected',
-      value: formatCurrency(feeStats.totalCollected),
-      icon: DollarSign,
-      color: 'bg-purple-500',
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-600',
-    },
-  ];
-
-  // Prepare chart data
-  const roomChartData = roomsByStatus.map(item => ({
-    name: item._id,
-    value: item.count,
-  }));
-
-  const complaintChartData = complaintsByStatus.map(item => ({
-    name: item._id,
-    count: item.count,
-  }));
-
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+  const roomChartData = roomsByStatus.map(i => ({ name: i._id, value: i.count }));
+  const complaintChartData = complaintsByStatus.map(i => ({ name: i._id, count: i.count }));
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back! Here's what's happening today.</p>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Admin Dashboard</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Here's what's happening in the hostel today.</p>
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((stat, index) => (
-          <div key={index} className="stat-card border-l-blue-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full ${stat.iconBg}`}>
-                <stat.icon className={`h-6 w-6 ${stat.iconColor}`} />
-              </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard title="Total Students" value={overview.totalStudents} icon={Users} accent="bg-indigo-500" sub="registered students" />
+        <StatCard title="Total Rooms" value={overview.totalRooms} icon={DoorOpen} accent="bg-emerald-500" sub={`${overview.occupiedRooms} occupied`} />
+        <StatCard title="Pending Complaints" value={overview.pendingComplaints} icon={MessageSquare} accent="bg-amber-500" sub="awaiting action" />
+        <StatCard title="Fee Collected" value={formatCurrency(feeStats.totalCollected)} icon={IndianRupee} accent="bg-violet-500" sub={`of ${formatCurrency(feeStats.totalFeeAmount)}`} />
+      </div>
+
+      {/* Room Occupancy Banner */}
+      <div className="bg-gradient-to-br from-indigo-600 to-violet-600 rounded-2xl p-6 flex items-center justify-between relative overflow-hidden">
+        <div className="absolute -top-6 -right-6 h-32 w-32 rounded-full bg-white/5" />
+        <div className="absolute bottom-0 right-20 h-20 w-20 rounded-full bg-white/5" />
+        <div className="relative">
+          <p className="text-white/70 text-sm font-medium mb-1">Room Occupancy Rate</p>
+          <p className="text-4xl font-bold text-white">{overview.roomOccupancyPercentage}%</p>
+          <p className="text-white/60 text-sm mt-1">{overview.occupiedRooms} of {overview.totalRooms} rooms occupied</p>
+        </div>
+        <div className="relative">
+          <div className="w-32 h-32 rounded-full border-8 border-white/20 flex items-center justify-center">
+            <div className="text-center">
+              <TrendingUp className="h-8 w-8 text-white/50 mx-auto" />
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Fee Overview row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {[
+          { label: 'Total Fee Assigned', value: formatCurrency(feeStats.totalFeeAmount), color: 'text-slate-800' },
+          { label: 'Amount Collected', value: formatCurrency(feeStats.totalCollected), color: 'text-emerald-600' },
+          { label: 'Pending Dues', value: formatCurrency(feeStats.totalPending), color: 'text-rose-600' },
+        ].map(({ label, value, color }) => (
+          <div key={label} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">{label}</p>
+            <p className={`text-2xl font-bold ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
-      {/* Fee Overview */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-2">Total Fee Amount</h3>
-          <p className="text-3xl font-bold text-primary-600">{formatCurrency(feeStats.totalFeeAmount)}</p>
-        </div>
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-2">Amount Collected</h3>
-          <p className="text-3xl font-bold text-green-600">{formatCurrency(feeStats.totalCollected)}</p>
-        </div>
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-2">Pending Dues</h3>
-          <p className="text-3xl font-bold text-red-600">{formatCurrency(feeStats.totalPending)}</p>
-        </div>
-      </div>
-
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Room Occupancy Chart */}
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Room Status Distribution</h3>
-          <ResponsiveContainer width="100%" height={300}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <h3 className="text-sm font-bold text-slate-700 mb-4">Room Status Distribution</h3>
+          <ResponsiveContainer width="100%" height={260}>
             <PieChart>
-              <Pie
-                data={roomChartData}
-                cx="50%"
-                cy="50%"
+              <Pie data={roomChartData} cx="50%" cy="50%"
                 labelLine={false}
                 label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {roomChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                outerRadius={90} dataKey="value">
+                {roomChartData.map((_, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Complaint Status Chart */}
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Complaint Status</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={complaintChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="count" fill="#3b82f6" />
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <h3 className="text-sm font-bold text-slate-700 mb-4">Complaints by Status</h3>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={complaintChartData} barSize={36}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0' }} />
+              <Bar dataKey="count" fill="#6366f1" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Complaints */}
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Recent Complaints</h3>
-          <div className="space-y-3">
-            {recentComplaints.length > 0 ? (
-              recentComplaints.map((complaint) => (
-                <div key={complaint._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{complaint.title}</p>
-                    <p className="text-sm text-gray-600">{complaint.studentId?.name}</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(complaint.status)}`}>
-                    {complaint.status}
-                  </span>
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Complaints */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <h3 className="text-sm font-bold text-slate-700 mb-4">Recent Complaints</h3>
+          <div className="space-y-2">
+            {recentComplaints.length > 0 ? recentComplaints.map(c => (
+              <div key={c._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{c.title}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{c.studentId?.name}</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">No recent complaints</p>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(c.status)}`}>{c.status}</span>
+              </div>
+            )) : (
+              <p className="text-slate-400 text-sm text-center py-6">No recent complaints</p>
             )}
           </div>
         </div>
 
-        {/* Recent Leaves */}
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Recent Leave Requests</h3>
-          <div className="space-y-3">
-            {recentLeaves.length > 0 ? (
-              recentLeaves.map((leave) => (
-                <div key={leave._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-900">{leave.studentId?.name}</p>
-                    <p className="text-sm text-gray-600">{leave.numberOfDays} days</p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
-                    {leave.status}
-                  </span>
+        {/* Leaves */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <h3 className="text-sm font-bold text-slate-700 mb-4">Recent Leave Requests</h3>
+          <div className="space-y-2">
+            {recentLeaves.length > 0 ? recentLeaves.map(l => (
+              <div key={l._id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">{l.studentId?.name}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">{l.numberOfDays} days</p>
                 </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center py-4">No recent leaves</p>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(l.status)}`}>{l.status}</span>
+              </div>
+            )) : (
+              <p className="text-slate-400 text-sm text-center py-6">No recent leaves</p>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Room Occupancy Info */}
-      <div className="card bg-gradient-to-r from-primary-500 to-primary-600 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Room Occupancy</h3>
-            <p className="text-3xl font-bold">{overview.roomOccupancyPercentage}%</p>
-            <p className="text-sm opacity-90 mt-1">
-              {overview.occupiedRooms} out of {overview.totalRooms} rooms occupied
-            </p>
-          </div>
-          <TrendingUp className="h-16 w-16 opacity-50" />
         </div>
       </div>
     </div>

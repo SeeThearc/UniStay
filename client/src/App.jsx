@@ -32,31 +32,30 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <Toaster 
+        <Toaster
           position="top-right"
           toastOptions={{
             duration: 3000,
             style: {
-              background: '#363636',
-              color: '#fff',
+              background: '#ffffff',
+              color: '#1e293b',
+              border: '1px solid #e2e8f0',
+              borderRadius: '12px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              fontSize: '14px',
+              fontWeight: '500',
             },
             success: {
               duration: 3000,
-              iconTheme: {
-                primary: '#10b981',
-                secondary: '#fff',
-              },
+              iconTheme: { primary: '#10b981', secondary: '#fff' },
             },
             error: {
               duration: 4000,
-              iconTheme: {
-                primary: '#ef4444',
-                secondary: '#fff',
-              },
+              iconTheme: { primary: '#ef4444', secondary: '#fff' },
             },
           }}
         />
-        
+
         <Routes>
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Home, Users, MapPin } from 'lucide-react';
+import { Home, Users, MapPin, BedDouble, Building2, IndianRupee, Wifi } from 'lucide-react';
 import axios from '../../api/axios';
 import Loader from '../../components/common/Loader';
 import toast from 'react-hot-toast';
@@ -8,149 +8,128 @@ const MyRoom = () => {
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRoomDetails();
-  }, []);
+  useEffect(() => { fetchRoomDetails(); }, []);
 
   const fetchRoomDetails = async () => {
     try {
-      const userResponse = await axios.get('/auth/me');
-      const user = userResponse.data.data;
-
-      if (user.roomAssigned) {
-        const roomResponse = await axios.get(`/rooms/${user.roomAssigned._id}`);
-        setRoom(roomResponse.data.data);
+      const u = await axios.get('/auth/me');
+      if (u.data.data.roomAssigned) {
+        const r = await axios.get(`/rooms/${u.data.data.roomAssigned._id}`);
+        setRoom(r.data.data);
       }
-    } catch (error) {
-      toast.error('Failed to fetch room details');
-    } finally {
-      setLoading(false);
-    }
+    } catch { toast.error('Failed to fetch room details'); }
+    finally { setLoading(false); }
   };
 
   if (loading) return <Loader fullScreen />;
 
-  if (!room) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <Home className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Room Assigned</h2>
-          <p className="text-gray-600">You have not been assigned a room yet.</p>
-          <p className="text-gray-600 mt-2">Please contact the hostel administrator.</p>
+  if (!room) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <div className="h-20 w-20 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+          <Home className="h-10 w-10 text-slate-400" />
         </div>
+        <h2 className="text-xl font-bold text-slate-800 mb-2">No Room Assigned</h2>
+        <p className="text-slate-500 text-sm">You have not been assigned a room yet.</p>
+        <p className="text-slate-400 text-sm mt-1">Please contact the hostel administrator.</p>
       </div>
-    );
-  }
+    </div>
+  );
+
+  const pct = Math.round((room.occupants.length / room.capacity) * 100);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">My Room</h1>
-        <p className="text-gray-600 mt-2">Your hostel room details</p>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">My Room</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Your assigned room details</p>
       </div>
 
-      {/* Room Overview Card */}
-      <div className="card bg-gradient-to-r from-primary-500 to-primary-600 text-white">
-        <div className="flex items-center justify-between">
+      {/* Hero Banner */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 rounded-2xl p-7 relative overflow-hidden">
+        <div className="absolute -top-8 -right-8 h-40 w-40 rounded-full bg-white/5" />
+        <div className="absolute bottom-0 right-24 h-24 w-24 rounded-full bg-white/5" />
+        <div className="relative flex items-center justify-between">
           <div>
-            <p className="text-sm opacity-90 mb-1">Room Number</p>
-            <h2 className="text-4xl font-bold">{room.roomNumber}</h2>
+            <p className="text-white/70 text-sm mb-1">Room Number</p>
+            <h2 className="text-5xl font-black text-white tracking-tight">{room.roomNumber}</h2>
+            <div className="flex items-center gap-4 mt-3">
+              <div className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5">
+                <p className="text-white/60 text-xs">Block</p>
+                <p className="text-white font-bold text-sm">{room.block}</p>
+              </div>
+              <div className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5">
+                <p className="text-white/60 text-xs">Floor</p>
+                <p className="text-white font-bold text-sm">Floor {room.floor}</p>
+              </div>
+              <div className="bg-white/10 border border-white/20 rounded-xl px-3 py-1.5">
+                <p className="text-white/60 text-xs">Status</p>
+                <p className="text-white font-bold text-sm">{room.status}</p>
+              </div>
+            </div>
           </div>
-          <Home className="h-16 w-16 opacity-50" />
+          <Home className="h-20 w-20 text-white/20 hidden md:block" />
         </div>
       </div>
 
-      {/* Room Details */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="card">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <MapPin className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Block</p>
-              <p className="text-xl font-bold text-gray-900">{room.block}</p>
-            </div>
+      {/* Detail cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { icon: MapPin, label: 'Block', value: room.block, color: 'bg-blue-500' },
+          { icon: Building2, label: 'Floor', value: `Floor ${room.floor}`, color: 'bg-indigo-500' },
+          { icon: BedDouble, label: 'Capacity', value: `${room.capacity} Beds`, color: 'bg-violet-500' },
+          { icon: IndianRupee, label: 'Rent/Bed', value: room.rentPerBed ? `₹${room.rentPerBed}` : 'N/A', color: 'bg-emerald-500' },
+        ].map(({ icon: Icon, label, value, color }) => (
+          <div key={label} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div className={`inline-flex p-2.5 rounded-xl mb-3 ${color}`}><Icon className="h-4 w-4 text-white" /></div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+            <p className="text-xl font-bold text-slate-800 mt-0.5">{value}</p>
           </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Home className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Floor</p>
-              <p className="text-xl font-bold text-gray-900">{room.floor}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Capacity</p>
-              <p className="text-xl font-bold text-gray-900">{room.capacity} Beds</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <Users className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-600">Occupancy</p>
-              <p className="text-xl font-bold text-gray-900">
-                {room.occupants.length} / {room.capacity}
-              </p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Roommates */}
-      <div className="card">
-        <h3 className="text-lg font-semibold mb-4">Roommates</h3>
+      {/* Occupancy */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Users className="h-4 w-4 text-indigo-500" />
+            <h3 className="text-sm font-bold text-slate-700">Occupancy</h3>
+          </div>
+          <span className="text-sm font-bold text-slate-800">{room.occupants.length} / {room.capacity}</span>
+        </div>
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden mb-5">
+          <div className={`h-full rounded-full ${pct >= 100 ? 'bg-rose-500' : pct > 60 ? 'bg-amber-400' : 'bg-emerald-500'}`} style={{ width: `${pct}%` }} />
+        </div>
+
         {room.occupants.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {room.occupants.map((occupant) => (
-              <div key={occupant._id} className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-                <div className="h-12 w-12 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 font-semibold text-lg">
-                    {occupant.name.charAt(0).toUpperCase()}
-                  </span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {room.occupants.map(o => (
+              <div key={o._id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
+                <div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">
+                  {o.name.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="font-medium text-gray-900">{occupant.name}</p>
-                  <p className="text-sm text-gray-600">{occupant.studentId}</p>
-                  <p className="text-sm text-gray-500">{occupant.email}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-800 truncate">{o.name}</p>
+                  <p className="text-xs text-slate-400 truncate">{o.studentId} · {o.email}</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="text-gray-500 text-center py-4">No roommates yet</p>
+          <p className="text-sm text-slate-400 text-center py-4">No roommates yet</p>
         )}
       </div>
 
       {/* Amenities */}
-      {room.amenities && room.amenities.length > 0 && (
-        <div className="card">
-          <h3 className="text-lg font-semibold mb-4">Room Amenities</h3>
+      {room.amenities?.length > 0 && (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <Wifi className="h-4 w-4 text-indigo-500" />
+            <h3 className="text-sm font-bold text-slate-700">Room Amenities</h3>
+          </div>
           <div className="flex flex-wrap gap-2">
-            {room.amenities.map((amenity, index) => (
-              <span
-                key={index}
-                className="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg text-sm font-medium"
-              >
-                {amenity}
-              </span>
+            {room.amenities.map((a, i) => (
+              <span key={i} className="px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-xl text-xs font-semibold">{a}</span>
             ))}
           </div>
         </div>

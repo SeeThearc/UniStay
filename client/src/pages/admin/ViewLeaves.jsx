@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar, Check, X } from 'lucide-react';
+import { Search, Calendar, Check, X, Clock, CheckCircle, XCircle } from 'lucide-react';
 import axios from '../../api/axios';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import toast from 'react-hot-toast';
 import { formatDate, getStatusColor } from '../../utils/constants';
+
+const ic = "w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent";
 
 const ViewLeaves = () => {
   const [leaves, setLeaves] = useState([]);
@@ -15,296 +17,170 @@ const ViewLeaves = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [rejectionReason, setRejectionReason] = useState('');
 
-  useEffect(() => {
-    fetchLeaves();
-  }, []);
-
+  useEffect(() => { fetchLeaves(); }, []);
   const fetchLeaves = async () => {
-    try {
-      const response = await axios.get('/leaves');
-      setLeaves(response.data.data);
-    } catch (error) {
-      toast.error('Failed to fetch leaves');
-    } finally {
-      setLoading(false);
-    }
+    try { const r = await axios.get('/leaves'); setLeaves(r.data.data); }
+    catch { toast.error('Failed to fetch leaves'); }
+    finally { setLoading(false); }
+  };
+  const handleApprove = async (id) => {
+    try { await axios.put(`/leaves/${id}/status`, { status: 'Approved' }); toast.success('Leave approved'); fetchLeaves(); setShowModal(false); }
+    catch (e) { toast.error(e.response?.data?.message || 'Failed'); }
+  };
+  const handleReject = async (id) => {
+    try { await axios.put(`/leaves/${id}/status`, { status: 'Rejected', rejectionReason }); toast.success('Leave rejected'); fetchLeaves(); setShowModal(false); setRejectionReason(''); }
+    catch (e) { toast.error(e.response?.data?.message || 'Failed'); }
   };
 
-  const handleApprove = async (leaveId) => {
-    try {
-      await axios.put(`/leaves/${leaveId}/status`, { status: 'Approved' });
-      toast.success('Leave approved successfully');
-      fetchLeaves();
-      setShowModal(false);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to approve leave');
-    }
-  };
-
-  const handleReject = async (leaveId) => {
-    try {
-      await axios.put(`/leaves/${leaveId}/status`, {
-        status: 'Rejected',
-        rejectionReason,
-      });
-      toast.success('Leave rejected');
-      fetchLeaves();
-      setShowModal(false);
-      setRejectionReason('');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to reject leave');
-    }
-  };
-
-  const viewLeave = async (leave) => {
-    setSelectedLeave(leave);
-    setShowModal(true);
-  };
-
-  const filteredLeaves = leaves.filter(leave => {
-    const matchesSearch = 
-      leave.studentId?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      leave.studentId?.studentId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'All' || leave.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+  const filtered = leaves.filter(l => {
+    const s = searchTerm.toLowerCase();
+    return (l.studentId?.name.toLowerCase().includes(s) || l.studentId?.studentId?.toLowerCase().includes(s)) && (statusFilter === 'All' || l.status === statusFilter);
   });
 
   if (loading) return <Loader fullScreen />;
-
-  const stats = {
-    total: leaves.length,
-    pending: leaves.filter(l => l.status === 'Pending').length,
-    approved: leaves.filter(l => l.status === 'Approved').length,
-    rejected: leaves.filter(l => l.status === 'Rejected').length,
-  };
+  const stats = { total: leaves.length, pending: leaves.filter(l => l.status === 'Pending').length, approved: leaves.filter(l => l.status === 'Approved').length, rejected: leaves.filter(l => l.status === 'Rejected').length };
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Leave Requests</h1>
-        <p className="text-gray-600 mt-2">Manage student leave applications</p>
+        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Leave Requests</h1>
+        <p className="text-sm text-slate-500 mt-0.5">Manage student leave applications</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="card">
-          <h3 className="text-sm text-gray-600 mb-1">Total Requests</h3>
-          <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
-        </div>
-        <div className="card">
-          <h3 className="text-sm text-gray-600 mb-1">Pending</h3>
-          <p className="text-3xl font-bold text-yellow-600">{stats.pending}</p>
-        </div>
-        <div className="card">
-          <h3 className="text-sm text-gray-600 mb-1">Approved</h3>
-          <p className="text-3xl font-bold text-green-600">{stats.approved}</p>
-        </div>
-        <div className="card">
-          <h3 className="text-sm text-gray-600 mb-1">Rejected</h3>
-          <p className="text-3xl font-bold text-red-600">{stats.rejected}</p>
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: 'Total', value: stats.total, icon: Calendar, accent: 'bg-indigo-500' },
+          { label: 'Pending', value: stats.pending, icon: Clock, accent: 'bg-amber-500' },
+          { label: 'Approved', value: stats.approved, icon: CheckCircle, accent: 'bg-emerald-500' },
+          { label: 'Rejected', value: stats.rejected, icon: XCircle, accent: 'bg-rose-500' },
+        ].map(({ label, value, icon: Icon, accent }) => (
+          <div key={label} className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+            <div className={`inline-flex p-2.5 rounded-xl mb-3 ${accent}`}><Icon className="h-4 w-4 text-white" /></div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">{label}</p>
+            <p className="text-2xl font-bold text-slate-800 mt-0.5">{value}</p>
+          </div>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="card">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-            <input
-              type="text"
-              placeholder="Search leaves..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-field pl-10"
-            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <input type="text" placeholder="Search by student name or ID…" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent" />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="input-field"
-          >
-            <option value="All">All Status</option>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
+          <div className="flex gap-2 flex-wrap">
+            {['All', 'Pending', 'Approved', 'Rejected'].map(s => (
+              <button key={s} onClick={() => setStatusFilter(s)} className={`px-3 py-2 text-xs font-semibold rounded-xl transition-colors ${statusFilter === s ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{s}</button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Leaves List */}
-      <div className="card overflow-hidden">
+      {/* Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Student
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Duration
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Days
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
+          <table className="min-w-full">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                {['Student', 'Duration', 'Days', 'Type', 'Status', 'Actions'].map(h => (
+                  <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredLeaves.map((leave) => (
-                <tr key={leave._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{leave.studentId?.name}</div>
-                    <div className="text-sm text-gray-500">{leave.studentId?.studentId}</div>
+            <tbody className="divide-y divide-slate-50">
+              {filtered.length > 0 ? filtered.map(leave => (
+                <tr key={leave._id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-5 py-4">
+                    <p className="text-sm font-semibold text-slate-800">{leave.studentId?.name}</p>
+                    <p className="text-xs text-slate-400">{leave.studentId?.studentId}</p>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {formatDate(leave.fromDate)} - {formatDate(leave.toDate)}
+                  <td className="px-5 py-4">
+                    <p className="text-sm text-slate-700">{formatDate(leave.fromDate)}</p>
+                    <p className="text-xs text-slate-400">→ {formatDate(leave.toDate)}</p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="text-sm font-semibold text-slate-800">{leave.numberOfDays}d</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-lg font-medium">{leave.leaveType}</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(leave.status)}`}>{leave.status}</span>
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => { setSelectedLeave(leave); setShowModal(true); }} className="text-xs font-semibold px-2.5 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors">View</button>
+                      {leave.status === 'Pending' && (
+                        <>
+                          <button onClick={() => handleApprove(leave._id)} className="text-xs font-semibold px-2.5 py-1.5 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors flex items-center gap-1">
+                            <Check className="h-3 w-3" /> Approve
+                          </button>
+                          <button onClick={() => { setSelectedLeave(leave); setShowModal(true); }} className="text-xs font-semibold px-2.5 py-1.5 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-colors flex items-center gap-1">
+                            <X className="h-3 w-3" /> Reject
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{leave.numberOfDays} days</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{leave.leaveType}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(leave.status)}`}>
-                      {leave.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                    <button
-                      onClick={() => viewLeave(leave)}
-                      className="text-primary-600 hover:text-primary-900 font-medium"
-                    >
-                      View
-                    </button>
-                    {leave.status === 'Pending' && (
-                      <>
-                        <button
-                          onClick={() => handleApprove(leave._id)}
-                          className="text-green-600 hover:text-green-900 font-medium"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => viewLeave(leave)}
-                          className="text-red-600 hover:text-red-900 font-medium"
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </td>
                 </tr>
-              ))}
+              )) : (
+                <tr><td colSpan={6} className="px-5 py-12 text-center">
+                  <Calendar className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm text-slate-400">No leave requests found</p>
+                </td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Leave Details Modal */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-          setRejectionReason('');
-        }}
-        title="Leave Request Details"
-      >
+      {/* Detail Modal */}
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setRejectionReason(''); }} title="Leave Request Details">
         {selectedLeave && (
-          <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Student Name</p>
-                  <p className="font-medium">{selectedLeave.studentId?.name}</p>
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                ['Student', selectedLeave.studentId?.name],
+                ['Student ID', selectedLeave.studentId?.studentId],
+                ['From', formatDate(selectedLeave.fromDate)],
+                ['To', formatDate(selectedLeave.toDate)],
+                ['Days', `${selectedLeave.numberOfDays} days`],
+                ['Type', selectedLeave.leaveType],
+                ['Status', <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getStatusColor(selectedLeave.status)}`}>{selectedLeave.status}</span>],
+                ['Applied On', formatDate(selectedLeave.createdAt)],
+              ].map(([k, v]) => (
+                <div key={k} className="bg-slate-50 rounded-xl p-3">
+                  <p className="text-xs text-slate-400 mb-1">{k}</p>
+                  <div className="text-sm font-semibold text-slate-800">{v}</div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Student ID</p>
-                  <p className="font-medium">{selectedLeave.studentId?.studentId}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">From Date</p>
-                  <p className="font-medium">{formatDate(selectedLeave.fromDate)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">To Date</p>
-                  <p className="font-medium">{formatDate(selectedLeave.toDate)}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Number of Days</p>
-                  <p className="font-medium">{selectedLeave.numberOfDays} days</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Leave Type</p>
-                  <p className="font-medium">{selectedLeave.leaveType}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedLeave.status)}`}>
-                    {selectedLeave.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Applied On</p>
-                  <p className="font-medium">{formatDate(selectedLeave.createdAt)}</p>
-                </div>
-              </div>
+              ))}
             </div>
 
-            <div>
-              <h4 className="font-semibold mb-2">Reason</h4>
-              <p className="text-gray-700">{selectedLeave.reason}</p>
+            <div className="bg-slate-50 rounded-xl p-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Reason</p>
+              <p className="text-sm text-slate-700 leading-relaxed">{selectedLeave.reason}</p>
             </div>
 
             {selectedLeave.status === 'Rejected' && selectedLeave.rejectionReason && (
-              <div>
-                <h4 className="font-semibold mb-2">Rejection Reason</h4>
-                <p className="text-red-700">{selectedLeave.rejectionReason}</p>
+              <div className="bg-rose-50 border border-rose-100 rounded-xl p-4">
+                <p className="text-xs font-semibold text-rose-600 uppercase tracking-wide mb-1">Rejection Reason</p>
+                <p className="text-sm text-rose-700">{selectedLeave.rejectionReason}</p>
               </div>
             )}
 
             {selectedLeave.status === 'Pending' && (
-              <div className="space-y-4">
+              <div className="space-y-3 pt-3 border-t border-slate-100">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Rejection Reason (if rejecting)
-                  </label>
-                  <textarea
-                    value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    className="input-field"
-                    rows="3"
-                    placeholder="Enter reason for rejection..."
-                  />
+                  <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">Rejection Reason <span className="text-slate-400 font-normal normal-case">(required to reject)</span></label>
+                  <textarea value={rejectionReason} onChange={e => setRejectionReason(e.target.value)} className={ic} rows="3" placeholder="Enter reason if rejecting…" />
                 </div>
-
-                <div className="flex space-x-3 pt-4 border-t">
-                  <button
-                    onClick={() => handleApprove(selectedLeave._id)}
-                    className="flex-1 btn-success flex items-center justify-center"
-                  >
-                    <Check className="h-4 w-4 mr-2" />
-                    Approve
+                <div className="flex gap-3">
+                  <button onClick={() => handleApprove(selectedLeave._id)} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
+                    <Check className="h-4 w-4" /> Approve
                   </button>
-                  <button
-                    onClick={() => handleReject(selectedLeave._id)}
-                    className="flex-1 btn-danger flex items-center justify-center"
-                    disabled={!rejectionReason}
-                  >
-                    <X className="h-4 w-4 mr-2" />
-                    Reject
+                  <button onClick={() => handleReject(selectedLeave._id)} disabled={!rejectionReason} className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-rose-600 text-white text-sm font-semibold rounded-xl hover:bg-rose-700 disabled:opacity-50 transition-colors">
+                    <X className="h-4 w-4" /> Reject
                   </button>
                 </div>
               </div>

@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, DoorOpen, MessageSquare,
   Calendar, IndianRupee, Home, Shield, GraduationCap,
-  HardHat, LogOut
+  HardHat, LogOut, BadgeInfo
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -35,7 +35,7 @@ const Sidebar = () => {
   const getMenuItems = () => {
     if (user?.role === 'admin') return [
       { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
-      { path: '/admin/students', icon: Users, label: 'Students' },
+      { path: '/admin/users', icon: Users, label: 'Users' },
       { path: '/admin/rooms', icon: DoorOpen, label: 'Rooms' },
       { path: '/admin/complaints', icon: MessageSquare, label: 'Complaints' },
       { path: '/admin/leaves', icon: Calendar, label: 'Leaves' },
@@ -46,6 +46,7 @@ const Sidebar = () => {
       { path: '/warden/complaints', icon: MessageSquare, label: 'Complaints' },
       { path: '/warden/leaves', icon: Calendar, label: 'Leaves' },
       { path: '/warden/rooms', icon: DoorOpen, label: 'Rooms' },
+      { path: '/warden/info', icon: BadgeInfo, label: 'Info' },
     ];
     if (user?.role === 'student') return [
       { path: '/student', icon: LayoutDashboard, label: 'Dashboard' },
@@ -53,6 +54,7 @@ const Sidebar = () => {
       { path: '/student/complaints', icon: MessageSquare, label: 'Complaints' },
       { path: '/student/leaves', icon: Calendar, label: 'Leaves' },
       { path: '/student/fees', icon: IndianRupee, label: 'Fees' },
+      { path: '/student/info', icon: BadgeInfo, label: 'Info' },
     ];
     return [];
   };

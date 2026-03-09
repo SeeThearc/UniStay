@@ -1,76 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ─── Base ─────────────────────────────────────────── */
+@layer base {
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background-color: #f8fafc;
+    color: #1e293b;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
 
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: #f8fafc;
-  color: #1e293b;
-}
-
-/* ─── Scrollbar ─────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* ─── Reusable component classes ────────────────────────── */
+/* ─── Component tokens ──────────────────────────────── */
 @layer components {
 
-  /* Buttons */
-  .btn-primary {
-    @apply bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700
-           transition-all duration-150 font-semibold text-sm active:scale-95 shadow-sm;
-  }
-
-  .btn-secondary {
-    @apply bg-slate-100 text-slate-700 px-4 py-2 rounded-xl hover:bg-slate-200
-           transition-all duration-150 font-semibold text-sm active:scale-95;
-  }
-
-  .btn-danger {
-    @apply bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700
-           transition-all duration-150 font-semibold text-sm active:scale-95;
-  }
-
-  .btn-success {
-    @apply bg-emerald-600 text-white px-4 py-2 rounded-xl hover:bg-emerald-700
-           transition-all duration-150 font-semibold text-sm active:scale-95;
-  }
-
-  /* Inputs */
-  .input-field {
-    @apply w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl
-           focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent
-           placeholder-slate-400 transition-shadow;
-  }
-
-  /* Cards */
+  /* Layout cards */
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6;
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-5;
   }
 
   .stat-card {
-    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-6 border-l-4;
+    @apply bg-white rounded-2xl shadow-sm border border-slate-100 p-5;
+  }
+
+  /* Shared input style */
+  .input-field {
+    @apply w-full px-3 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent placeholder-slate-400 transition-all;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-semibold rounded-xl transition-all active:scale-95 shadow-sm;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-all;
+  }
+
+  .btn-success {
+    @apply px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white text-sm font-semibold rounded-xl transition-all active:scale-95;
+  }
+
+  .btn-danger {
+    @apply px-4 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:bg-rose-300 text-white text-sm font-semibold rounded-xl transition-all active:scale-95;
+  }
+
+  /* Page header */
+  .page-title {
+    @apply text-2xl font-bold text-slate-800 tracking-tight;
+  }
+
+  .page-subtitle {
+    @apply text-sm text-slate-500 mt-0.5;
   }
 }

@@ -6,12 +6,11 @@ import DashboardLayout from './components/layout/DashboardLayout';
 
 // Auth Pages
 import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManageRooms from './pages/admin/ManageRooms';
-import ManageStudents from './pages/admin/ManageStudents';
+import ManageUsers from './pages/admin/ManageUsers';
 import ManageFees from './pages/admin/ManageFees';
 import ViewComplaints from './pages/admin/ViewComplaints';
 import ViewLeaves from './pages/admin/ViewLeaves';
@@ -20,6 +19,7 @@ import ViewLeaves from './pages/admin/ViewLeaves';
 import WardenDashboard from './pages/warden/WardenDashboard';
 import WardenComplaints from './pages/warden/ManageComplaints';
 import WardenLeaves from './pages/warden/ManageLeaves';
+import WardenInfo from './pages/warden/WardenInfo';
 
 // Student Pages
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -27,6 +27,7 @@ import MyRoom from './pages/student/MyRoom';
 import MyComplaints from './pages/student/MyComplaints';
 import MyLeaves from './pages/student/MyLeaves';
 import MyFees from './pages/student/MyFees';
+import StudentInfo from './pages/student/StudentInfo';
 
 function App() {
   return (
@@ -45,21 +46,14 @@ function App() {
               fontSize: '14px',
               fontWeight: '500',
             },
-            success: {
-              duration: 3000,
-              iconTheme: { primary: '#10b981', secondary: '#fff' },
-            },
-            error: {
-              duration: 4000,
-              iconTheme: { primary: '#ef4444', secondary: '#fff' },
-            },
+            success: { duration: 3000, iconTheme: { primary: '#10b981', secondary: '#fff' } },
+            error: { duration: 4000, iconTheme: { primary: '#ef4444', secondary: '#fff' } },
           }}
         />
 
         <Routes>
-          {/* Public Routes */}
+          {/* Public — login only, no self-registration */}
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
 
           {/* Admin Routes */}
           <Route
@@ -71,7 +65,7 @@ function App() {
             }
           >
             <Route index element={<AdminDashboard />} />
-            <Route path="students" element={<ManageStudents />} />
+            <Route path="users" element={<ManageUsers />} />
             <Route path="rooms" element={<ManageRooms />} />
             <Route path="complaints" element={<ViewComplaints />} />
             <Route path="leaves" element={<ViewLeaves />} />
@@ -91,6 +85,7 @@ function App() {
             <Route path="complaints" element={<WardenComplaints />} />
             <Route path="leaves" element={<WardenLeaves />} />
             <Route path="rooms" element={<ManageRooms />} />
+            <Route path="info" element={<WardenInfo />} />
           </Route>
 
           {/* Student Routes */}
@@ -107,6 +102,7 @@ function App() {
             <Route path="complaints" element={<MyComplaints />} />
             <Route path="leaves" element={<MyLeaves />} />
             <Route path="fees" element={<MyFees />} />
+            <Route path="info" element={<StudentInfo />} />
           </Route>
 
           {/* Default Redirect */}

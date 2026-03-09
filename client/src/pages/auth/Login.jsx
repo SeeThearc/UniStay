@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogIn, Building2, Shield, GraduationCap, HardHat, Eye, EyeOff } from 'lucide-react';
 import Loader from '../../components/common/Loader';
@@ -129,11 +129,8 @@ const Login = () => {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-700">
-              Register here
-            </Link>
+          <p className="mt-6 text-center text-sm text-slate-400">
+            Account access is managed by the hostel admin.
           </p>
         </div>
       </div>

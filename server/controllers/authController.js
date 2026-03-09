@@ -244,6 +244,28 @@ export const toggleUserStatus = async (req, res) => {
   }
 };
 
+// @desc    Admin resets a user's password
+// @route   PUT /api/auth/admin/users/:id/password
+// @access  Private/Admin
+export const resetUserPassword = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password || password.length < 4) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 4 characters' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    if (user.role === 'admin') return res.status(403).json({ success: false, message: 'Cannot reset admin password' });
+
+    user.password = password;
+    await user.save();
+
+    res.json({ success: true, message: `Password reset for ${user.name}` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 // @desc    Admin deletes a user
 // @route   DELETE /api/auth/admin/users/:id
 // @access  Private/Admin

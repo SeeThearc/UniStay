@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     User, Mail, Phone, MapPin, Edit3, Check, X,
-    ShieldCheck, Calendar, BadgeInfo
+    ShieldCheck, Calendar, BadgeInfo, KeyRound, Eye, EyeOff
 } from 'lucide-react';
 import axios from '../../api/axios';
 import Loader from '../../components/common/Loader';
@@ -28,6 +28,12 @@ const WardenInfo = () => {
     const [editing, setEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [form, setForm] = useState({});
+    // change password
+    const [showPwSection, setShowPwSection] = useState(false);
+    const [pwForm, setPwForm] = useState({ newPassword: '', confirmPassword: '' });
+    const [showNew, setShowNew] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [pwSaving, setPwSaving] = useState(false);
 
     const fetchProfile = async () => {
         try {
@@ -54,6 +60,26 @@ const WardenInfo = () => {
             await fetchProfile();
         } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
         finally { setSaving(false); }
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        if (pwForm.newPassword !== pwForm.confirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
+        if (pwForm.newPassword.length < 4) {
+            toast.error('Password must be at least 4 characters');
+            return;
+        }
+        setPwSaving(true);
+        try {
+            await axios.put('/auth/profile', { password: pwForm.newPassword });
+            toast.success('Password changed successfully');
+            setPwForm({ newPassword: '', confirmPassword: '' });
+            setShowPwSection(false);
+        } catch (err) { toast.error(err.response?.data?.message || 'Failed to change password'); }
+        finally { setPwSaving(false); }
     };
 
     if (loading) return <Loader fullScreen />;
@@ -135,6 +161,70 @@ const WardenInfo = () => {
                     <InfoRow icon={ShieldCheck} label="Role" value="Warden" />
                     <InfoRow icon={Calendar} label="Member Since" value={profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) : null} accent="bg-slate-100 text-slate-600" />
                 </div>
+            </div>
+            {/* Change Password */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+                <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-2">
+                        <KeyRound className="h-3.5 w-3.5 text-teal-400" /> Security
+                    </p>
+                    <button
+                        onClick={() => { setShowPwSection(!showPwSection); setPwForm({ newPassword: '', confirmPassword: '' }); }}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition-colors ${showPwSection ? 'bg-slate-100 text-slate-600' : 'bg-teal-50 text-teal-700 hover:bg-teal-100'
+                            }`}>
+                        {showPwSection ? 'Cancel' : 'Change Password'}
+                    </button>
+                </div>
+
+                {!showPwSection && (
+                    <p className="text-sm text-slate-400 mt-3">Your password is managed by the admin. You can change it here anytime.</p>
+                )}
+
+                {showPwSection && (
+                    <form onSubmit={handleChangePassword} className="space-y-4 mt-4">
+                        <div>
+                            <label className={lc}>New Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showNew ? 'text' : 'password'}
+                                    value={pwForm.newPassword}
+                                    onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })}
+                                    required minLength={4} placeholder="Enter new password"
+                                    className={`${ic} pr-10`}
+                                />
+                                <button type="button" onClick={() => setShowNew(!showNew)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <div>
+                            <label className={lc}>Confirm New Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showConfirm ? 'text' : 'password'}
+                                    value={pwForm.confirmPassword}
+                                    onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
+                                    required minLength={4} placeholder="Repeat new password"
+                                    className={`${ic} pr-10 ${pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword
+                                            ? 'border-rose-300 focus:ring-rose-400' : ''
+                                        }`}
+                                />
+                                <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                            {pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword && (
+                                <p className="text-xs text-rose-500 mt-1">Passwords do not match</p>
+                            )}
+                        </div>
+                        <button type="submit" disabled={pwSaving || pwForm.newPassword !== pwForm.confirmPassword}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 text-white text-sm font-semibold rounded-xl transition-all active:scale-95">
+                            <KeyRound className="h-4 w-4" /> {pwSaving ? 'Changing…' : 'Change Password'}
+                        </button>
+                    </form>
+                )}
             </div>
         </div>
     );

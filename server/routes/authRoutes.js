@@ -10,6 +10,7 @@ import {
   bulkCreateUsers,
   toggleUserStatus,
   deleteUser,
+  resetUserPassword,
 } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import { isAdmin, isAdminOrWarden } from '../middleware/roleMiddleware.js';
@@ -32,6 +33,7 @@ router.get('/wardens', protect, isAdmin, getWardens);
 router.post('/admin/users', protect, isAdmin, createUser);
 router.post('/admin/users/bulk', protect, isAdmin, bulkCreateUsers);
 router.put('/admin/users/:id/toggle', protect, isAdmin, toggleUserStatus);
+router.put('/admin/users/:id/password', protect, isAdmin, resetUserPassword);
 router.delete('/admin/users/:id', protect, isAdmin, deleteUser);
 
 export default router;

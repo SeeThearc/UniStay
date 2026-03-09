@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
     Plus, Trash2, UserCheck, UserX, Search, Upload, Download,
-    Users, GraduationCap, ShieldCheck, Eye, EyeOff, ChevronDown, X, CheckCircle2, XCircle
+    Users, GraduationCap, ShieldCheck, Eye, EyeOff, X, CheckCircle2, XCircle, KeyRound
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import axios from '../../api/axios';
@@ -27,7 +27,7 @@ function downloadSampleExcel() {
 }
 
 /* ─── sub-components ───────────────────────────────── */
-function UserTable({ users, onToggle, onDelete, emptyLabel }) {
+function UserTable({ users, onToggle, onDelete, onResetPw, emptyLabel }) {
     if (!users.length) return (
         <div className="py-16 text-center">
             <Users className="h-10 w-10 text-slate-300 mx-auto mb-2" />
@@ -73,6 +73,9 @@ function UserTable({ users, onToggle, onDelete, emptyLabel }) {
                                     <button onClick={() => onToggle(u)} className={`p-1.5 rounded-lg text-xs font-medium transition-colors ${u.isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50'}`} title={u.isActive ? 'Deactivate' : 'Activate'}>
                                         {u.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                                     </button>
+                                    <button onClick={() => onResetPw(u)} className="p-1.5 rounded-lg text-indigo-500 hover:bg-indigo-50 transition-colors" title="Reset Password">
+                                        <KeyRound className="h-4 w-4" />
+                                    </button>
                                     <button onClick={() => onDelete(u)} className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 transition-colors" title="Delete">
                                         <Trash2 className="h-4 w-4" />
                                     </button>
@@ -98,6 +101,11 @@ const ManageUsers = () => {
     const [showAdd, setShowAdd] = useState(false);
     const [showBulk, setShowBulk] = useState(false);
     const [showPw, setShowPw] = useState(false);
+    // reset password
+    const [pwTarget, setPwTarget] = useState(null);   // user whose pw we're resetting
+    const [pwValue, setPwValue] = useState('');
+    const [showResetPw, setShowResetPw] = useState(false);
+    const [pwResetting, setPwResetting] = useState(false);
 
     // bulk
     const [bulkRows, setBulkRows] = useState([]);
@@ -155,7 +163,36 @@ const ManageUsers = () => {
         } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
     };
 
+    /* reset password (admin) ── */
+    const handleResetPw = async (e) => {
+        e.preventDefault();
+        if (pwValue.length < 4) { toast.error('Password must be at least 4 characters'); return; }
+        setPwResetting(true);
+        try {
+            await axios.put(`/auth/admin/users/${pwTarget._id}/password`, { password: pwValue });
+            toast.success(`Password reset for ${pwTarget.name}`);
+            setPwTarget(null); setPwValue('');
+        } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+        finally { setPwResetting(false); }
+    };
+
     /* bulk excel ─────────── */
+    // Maps any case variation of a header to the exact camelCase field the app expects
+    const KEY_MAP = {
+        name: 'name',
+        email: 'email',
+        password: 'password',
+        role: 'role',
+        studentid: 'studentId',
+        'student id': 'studentId',
+        'student_id': 'studentId',
+        phonenumber: 'phoneNumber',
+        phone: 'phoneNumber',
+        'phone number': 'phoneNumber',
+        'phone_number': 'phoneNumber',
+        mobile: 'phoneNumber',
+    };
+
     const handleExcel = (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -164,10 +201,14 @@ const ManageUsers = () => {
             const wb = XLSX.read(ev.target.result, { type: 'binary' });
             const ws = wb.Sheets[wb.SheetNames[0]];
             const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
-            // normalize keys to lowercase
+            // Normalize each key: lowercase → remap to exact camelCase field name
             const rows = data.map(r => {
                 const out = {};
-                Object.keys(r).forEach(k => { out[k.toLowerCase().trim()] = String(r[k]).trim(); });
+                Object.keys(r).forEach(k => {
+                    const normalized = k.toLowerCase().trim();
+                    const mappedKey = KEY_MAP[normalized] || k.trim();
+                    out[mappedKey] = String(r[k]).trim();
+                });
                 return out;
             });
             setBulkRows(rows);
@@ -256,9 +297,51 @@ const ManageUsers = () => {
                     users={tab === 'student' ? filteredStudents : filteredWardens}
                     onToggle={handleToggle}
                     onDelete={handleDelete}
+                    onResetPw={(u) => { setPwTarget(u); setPwValue(''); }}
                     emptyLabel={`No ${tab}s found`}
                 />
             </div>
+
+            {/* ── Reset Password Modal ── */}
+            <Modal isOpen={!!pwTarget} onClose={() => { setPwTarget(null); setPwValue(''); }} title="Reset Password">
+                {pwTarget && (
+                    <form onSubmit={handleResetPw} className="space-y-4">
+                        <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-xl">
+                            <div className="h-9 w-9 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-sm shrink-0">
+                                {pwTarget.name[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800">{pwTarget.name}</p>
+                                <p className="text-xs text-slate-500">{pwTarget.email}</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label className={lc}>New Password</label>
+                            <div className="relative">
+                                <input
+                                    type={showResetPw ? 'text' : 'password'}
+                                    value={pwValue}
+                                    onChange={e => setPwValue(e.target.value)}
+                                    required minLength={4} placeholder="Enter new password"
+                                    className={`${ic} pr-10`} autoFocus
+                                />
+                                <button type="button" onClick={() => setShowResetPw(!showResetPw)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                    {showResetPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex gap-3 pt-1">
+                            <button type="submit" disabled={pwResetting || pwValue.length < 4}
+                                className="flex-1 flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95">
+                                <KeyRound className="h-4 w-4" /> {pwResetting ? 'Resetting…' : 'Reset Password'}
+                            </button>
+                            <button type="button" onClick={() => { setPwTarget(null); setPwValue(''); }}
+                                className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm">Cancel</button>
+                        </div>
+                    </form>
+                )}
+            </Modal>
 
             {/* ── Add User Modal ── */}
             <Modal isOpen={showAdd} onClose={() => setShowAdd(false)} title="Add New User">

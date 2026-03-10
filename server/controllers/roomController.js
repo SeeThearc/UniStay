@@ -1,5 +1,6 @@
 import Room from '../models/Room.js';
 import User from '../models/User.js';
+import { sendSMS } from '../utils/smsService.js';
 
 // Helper function to update room status
 const updateRoomStatus = (room) => {
@@ -65,7 +66,7 @@ export const createRoom = async (req, res) => {
   try {
     console.log('=== CREATE ROOM ===');
     console.log('Request body:', req.body);
-    
+
     const { roomNumber, block, floor, capacity, amenities, rentPerBed } = req.body;
 
     // Validate required fields
@@ -116,7 +117,7 @@ export const createRoom = async (req, res) => {
     console.error('Error name:', error.name);
     console.error('Error message:', error.message);
     console.error('Error stack:', error.stack);
-    
+
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to create room',
@@ -267,10 +268,10 @@ export const assignStudentToRoom = async (req, res) => {
 
     // Add student to room
     room.occupants.push(studentId);
-    
+
     // Update room status
     updateRoomStatus(room);
-    
+
     await room.save();
 
     // Update student's room assignment
@@ -278,6 +279,13 @@ export const assignStudentToRoom = async (req, res) => {
     await student.save();
 
     const updatedRoom = await Room.findById(room._id).populate('occupants', 'name email studentId');
+
+    // Notify the student via SMS
+    const assignMessage =
+      `UniStay Hostel: You have been assigned to Room ${room.roomNumber}, ` +
+      `Block ${room.block}, Floor ${room.floor}. ` +
+      `Welcome to your new room! – Management`;
+    await sendSMS(student.phoneNumber, assignMessage);
 
     res.json({
       success: true,
@@ -322,10 +330,10 @@ export const unassignStudentFromRoom = async (req, res) => {
     room.occupants = room.occupants.filter(
       occupant => occupant.toString() !== studentId
     );
-    
+
     // Update room status
     updateRoomStatus(room);
-    
+
     await room.save();
 
     // Update student's room assignment
@@ -333,6 +341,12 @@ export const unassignStudentFromRoom = async (req, res) => {
     await student.save();
 
     const updatedRoom = await Room.findById(room._id).populate('occupants', 'name email studentId');
+
+    // Notify the student via SMS
+    const unassignMessage =
+      `UniStay Hostel: You have been unassigned from Room ${room.roomNumber}, Block ${room.block}. ` +
+      `Please contact the warden for further details. – Management`;
+    await sendSMS(student.phoneNumber, unassignMessage);
 
     res.json({
       success: true,

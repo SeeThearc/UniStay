@@ -1,5 +1,8 @@
-import express from 'express';
 import dotenv from 'dotenv';
+// ⚠️ MUST be called before any other imports that read process.env (e.g. smsService)
+dotenv.config();
+
+import express from 'express';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import { errorHandler, notFound } from './middleware/errorMiddleware.js';
@@ -11,9 +14,6 @@ import complaintRoutes from './routes/complaintRoutes.js';
 import feeRoutes from './routes/feeRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
-
-// Load environment variables
-dotenv.config();
 
 // Connect to database
 connectDB();

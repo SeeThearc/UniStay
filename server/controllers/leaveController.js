@@ -1,4 +1,6 @@
 import Leave from '../models/Leave.js';
+import User from '../models/User.js';
+import { sendSMS, notifyWardens } from '../utils/smsService.js';
 
 // @desc    Get all leaves
 // @route   GET /api/leaves
@@ -111,7 +113,24 @@ export const applyLeave = async (req, res) => {
     });
 
     const populatedLeave = await Leave.findById(leave._id)
-      .populate('studentId', 'name email studentId');
+      .populate('studentId', 'name email studentId phoneNumber');
+
+    // Notify all active wardens via SMS
+    const student = populatedLeave.studentId;
+    const fromStr = new Date(fromDate).toLocaleDateString('en-IN');
+    const toStr = new Date(toDate).toLocaleDateString('en-IN');
+    const wardenMessage =
+      `UniStay Hostel: Leave request from ${student.name} (ID: ${student.studentId || 'N/A'}). ` +
+      `Type: ${leaveType || 'Personal'} | From: ${fromStr} To: ${toStr} | Reason: ${reason}. ` +
+      `Please review in the portal.`;
+    await notifyWardens(wardenMessage, User);
+
+    // Send confirmation SMS to the student
+    const studentMessage =
+      `UniStay Hostel: Your leave request has been submitted successfully. ` +
+      `Type: ${leaveType || 'Personal'} | From: ${fromStr} To: ${toStr} | Reason: ${reason}. ` +
+      `Status: Pending. We will notify you once it is reviewed. – Management`;
+    await sendSMS(student.phoneNumber, studentMessage);
 
     res.status(201).json({
       success: true,
@@ -160,8 +179,20 @@ export const updateLeaveStatus = async (req, res) => {
     await leave.save();
 
     const updatedLeave = await Leave.findById(leave._id)
-      .populate('studentId', 'name email studentId')
+      .populate('studentId', 'name email studentId phoneNumber')
       .populate('approvedBy', 'name email');
+
+    // Notify the student via SMS
+    const studentPhone = updatedLeave.studentId?.phoneNumber;
+    const fromStr = new Date(updatedLeave.fromDate).toLocaleDateString('en-IN');
+    const toStr = new Date(updatedLeave.toDate).toLocaleDateString('en-IN');
+    let studentMessage =
+      `UniStay Hostel: Your leave request from ${fromStr} to ${toStr} has been ${status}. `;
+    if (status === 'Rejected' && rejectionReason) {
+      studentMessage += `Reason: ${rejectionReason}. `;
+    }
+    studentMessage += `– Management`;
+    await sendSMS(studentPhone, studentMessage);
 
     res.json({
       success: true,

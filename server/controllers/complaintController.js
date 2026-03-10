@@ -1,4 +1,6 @@
 import Complaint from '../models/Complaint.js';
+import User from '../models/User.js';
+import { sendSMS, notifyWardens } from '../utils/smsService.js';
 
 // @desc    Get all complaints
 // @route   GET /api/complaints
@@ -110,9 +112,24 @@ export const createComplaint = async (req, res) => {
     });
 
     const populatedComplaint = await Complaint.findById(complaint._id)
-      .populate('studentId', 'name email studentId');
+      .populate('studentId', 'name email studentId phoneNumber');
 
     console.log('✅ Complaint created successfully:', complaint._id);
+
+    // Notify all active wardens via SMS
+    const student = populatedComplaint.studentId;
+    const wardenMessage =
+      `UniStay Hostel: New complaint by ${student.name} (ID: ${student.studentId || 'N/A'}). ` +
+      `Ticket: #${complaint.ticketId} | Category: ${category} | Priority: ${priority || 'Medium'} | Issue: ${title}. ` +
+      `Please review in the portal.`;
+    await notifyWardens(wardenMessage, User);
+
+    // Send confirmation SMS to the student
+    // const studentMessage =
+    //   `UniStay Hostel: Your complaint has been received. ` +
+    //   `Ticket ID: #${complaint.ticketId} | Category: ${category} | Priority: ${priority || 'Medium'}. ` +
+    //   `We will update you once it is reviewed. – Management`;
+    // await sendSMS(student.phoneNumber, studentMessage);
 
     res.status(201).json({
       success: true,
@@ -154,8 +171,15 @@ export const updateComplaintStatus = async (req, res) => {
     await complaint.save();
 
     const updatedComplaint = await Complaint.findById(complaint._id)
-      .populate('studentId', 'name email studentId')
+      .populate('studentId', 'name email studentId phoneNumber')
       .populate('resolvedBy', 'name email');
+
+    // Notify the student via SMS
+    const studentPhone = updatedComplaint.studentId?.phoneNumber;
+    const studentMessage =
+      `UniStay Hostel: Your complaint #${updatedComplaint.ticketId} status has been updated to "${status}". ` +
+      `${status === 'Resolved' ? 'We are glad to have resolved your issue.' : 'Please check the portal for details.'} – Management`;
+    await sendSMS(studentPhone, studentMessage);
 
     res.json({
       success: true,

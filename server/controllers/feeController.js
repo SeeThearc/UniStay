@@ -1,5 +1,6 @@
 import Fee from '../models/Fee.js';
 import User from '../models/User.js';
+import { sendSMS } from '../utils/smsService.js';
 
 // @desc    Get all fees
 // @route   GET /api/fees
@@ -121,7 +122,16 @@ export const createOrUpdateFee = async (req, res) => {
     }
 
     const populatedFee = await Fee.findById(fee._id)
-      .populate('studentId', 'name email studentId');
+      .populate('studentId', 'name email studentId phoneNumber');
+
+    // Notify the student via SMS
+    const studentPhone = populatedFee.studentId?.phoneNumber;
+    const dueDateStr = fee.dueDate ? new Date(fee.dueDate).toLocaleDateString('en-IN') : 'N/A';
+    const feeMessage =
+      `UniStay Hostel: Your hostel fee for ${fee.semester || 'current semester'} has been set/updated. ` +
+      `Total Fee: Rs.${fee.totalFee} | Due Date: ${dueDateStr}. ` +
+      `Please log in to the portal for details. – Management`;
+    await sendSMS(studentPhone, feeMessage);
 
     res.json({
       success: true,
@@ -167,7 +177,15 @@ export const updatePayment = async (req, res) => {
     await fee.save();
 
     const updatedFee = await Fee.findById(fee._id)
-      .populate('studentId', 'name email studentId');
+      .populate('studentId', 'name email studentId phoneNumber');
+
+    // Notify the student via SMS
+    const studentPhone = updatedFee.studentId?.phoneNumber;
+    const paymentMessage =
+      `UniStay Hostel: A payment of Rs.${amount} has been recorded for your fee account ` +
+      `(via ${paymentMethod || 'N/A'}${transactionId ? ', TxnID: ' + transactionId : ''}). ` +
+      `Total Paid: Rs.${updatedFee.amountPaid} | Remaining: Rs.${updatedFee.remainingDues}. – Management`;
+    await sendSMS(studentPhone, paymentMessage);
 
     res.json({
       success: true,

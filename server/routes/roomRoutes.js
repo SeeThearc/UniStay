@@ -25,7 +25,7 @@ router.route('/:id')
   .put(protect, isAdmin, updateRoom)
   .delete(protect, isAdmin, deleteRoom);
 
-router.post('/:id/assign', protect, isAdmin, assignStudentToRoom);
-router.post('/:id/unassign', protect, isAdmin, unassignStudentFromRoom);
+router.post('/:id/assign', protect, isAdminOrWarden, assignStudentToRoom);
+router.post('/:id/unassign', protect, isAdminOrWarden, unassignStudentFromRoom);
 
 export default router;

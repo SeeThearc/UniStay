@@ -122,7 +122,7 @@ export const createComplaint = async (req, res) => {
       `UniStay Hostel: New complaint by ${student.name} (ID: ${student.studentId || 'N/A'}). ` +
       `Ticket: #${complaint.ticketId} | Category: ${category} | Priority: ${priority || 'Medium'} | Issue: ${title}. ` +
       `Please review in the portal.`;
-    await notifyWardens(wardenMessage, User);
+    notifyWardens(wardenMessage, User);
 
     // Send confirmation SMS to the student
     // const studentMessage =
@@ -179,7 +179,7 @@ export const updateComplaintStatus = async (req, res) => {
     const studentMessage =
       `UniStay Hostel: Your complaint #${updatedComplaint.ticketId} status has been updated to "${status}". ` +
       `${status === 'Resolved' ? 'We are glad to have resolved your issue.' : 'Please check the portal for details.'} – Management`;
-    await sendSMS(studentPhone, studentMessage);
+    sendSMS(studentPhone, studentMessage);
 
     res.json({
       success: true,

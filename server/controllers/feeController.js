@@ -131,7 +131,7 @@ export const createOrUpdateFee = async (req, res) => {
       `UniStay Hostel: Your hostel fee for ${fee.semester || 'current semester'} has been set/updated. ` +
       `Total Fee: Rs.${fee.totalFee} | Due Date: ${dueDateStr}. ` +
       `Please log in to the portal for details. – Management`;
-    await sendSMS(studentPhone, feeMessage);
+    sendSMS(studentPhone, feeMessage);
 
     res.json({
       success: true,
@@ -185,7 +185,7 @@ export const updatePayment = async (req, res) => {
       `UniStay Hostel: A payment of Rs.${amount} has been recorded for your fee account ` +
       `(via ${paymentMethod || 'N/A'}${transactionId ? ', TxnID: ' + transactionId : ''}). ` +
       `Total Paid: Rs.${updatedFee.amountPaid} | Remaining: Rs.${updatedFee.remainingDues}. – Management`;
-    await sendSMS(studentPhone, paymentMessage);
+    sendSMS(studentPhone, paymentMessage);
 
     res.json({
       success: true,

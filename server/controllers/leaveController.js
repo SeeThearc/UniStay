@@ -123,7 +123,7 @@ export const applyLeave = async (req, res) => {
       `UniStay Hostel: Leave request from ${student.name} (ID: ${student.studentId || 'N/A'}). ` +
       `Type: ${leaveType || 'Personal'} | From: ${fromStr} To: ${toStr} | Reason: ${reason}. ` +
       `Please review in the portal.`;
-    await notifyWardens(wardenMessage, User);
+    notifyWardens(wardenMessage, User);
 
     // Send confirmation SMS to the student
     const studentMessage =
@@ -192,7 +192,7 @@ export const updateLeaveStatus = async (req, res) => {
       studentMessage += `Reason: ${rejectionReason}. `;
     }
     studentMessage += `– Management`;
-    await sendSMS(studentPhone, studentMessage);
+    sendSMS(studentPhone, studentMessage);
 
     res.json({
       success: true,

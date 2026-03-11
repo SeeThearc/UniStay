@@ -13,6 +13,7 @@ const priorityColor = { Low: 'bg-slate-100 text-slate-600', Medium: 'bg-amber-50
 const MyComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
@@ -27,8 +28,10 @@ const MyComplaints = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try { await axios.post('/complaints', formData); toast.success('Complaint submitted'); fetchComplaints(); closeModal(); }
     catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
+    finally { setSubmitting(false); }
   };
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -135,8 +138,12 @@ const MyComplaints = () => {
             <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} required className={ic} rows="4" placeholder="Describe your complaint in detail…" />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95">Submit Complaint</button>
-            <button type="button" onClick={closeModal} className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm transition-all">Cancel</button>
+            <button type="submit" disabled={submitting} className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl text-sm transition-all active:scale-95 flex items-center justify-center gap-2">
+              {submitting ? (
+                <><svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg> Submitting…</>
+              ) : 'Submit Complaint'}
+            </button>
+            <button type="button" onClick={closeModal} disabled={submitting} className="flex-1 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 font-semibold py-2.5 rounded-xl text-sm transition-all">Cancel</button>
           </div>
         </form>
       </Modal>

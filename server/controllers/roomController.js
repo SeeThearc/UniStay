@@ -285,7 +285,7 @@ export const assignStudentToRoom = async (req, res) => {
       `UniStay Hostel: You have been assigned to Room ${room.roomNumber}, ` +
       `Block ${room.block}, Floor ${room.floor}. ` +
       `Welcome to your new room! – Management`;
-    await sendSMS(student.phoneNumber, assignMessage);
+    sendSMS(student.phoneNumber, assignMessage);
 
     res.json({
       success: true,
@@ -346,7 +346,7 @@ export const unassignStudentFromRoom = async (req, res) => {
     const unassignMessage =
       `UniStay Hostel: You have been unassigned from Room ${room.roomNumber}, Block ${room.block}. ` +
       `Please contact the warden for further details. – Management`;
-    await sendSMS(student.phoneNumber, unassignMessage);
+    sendSMS(student.phoneNumber, unassignMessage);
 
     res.json({
       success: true,

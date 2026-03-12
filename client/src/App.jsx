@@ -14,6 +14,7 @@ import ManageUsers from './pages/admin/ManageUsers';
 import ManageFees from './pages/admin/ManageFees';
 import ViewComplaints from './pages/admin/ViewComplaints';
 import ViewLeaves from './pages/admin/ViewLeaves';
+import RoomHeatmap from './pages/admin/RoomHeatmap';
 
 // Warden Pages
 import WardenDashboard from './pages/warden/WardenDashboard';
@@ -67,6 +68,7 @@ function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="users" element={<ManageUsers />} />
             <Route path="rooms" element={<ManageRooms />} />
+            <Route path="heatmap" element={<RoomHeatmap />} />
             <Route path="complaints" element={<ViewComplaints />} />
             <Route path="leaves" element={<ViewLeaves />} />
             <Route path="fees" element={<ManageFees />} />
@@ -85,6 +87,7 @@ function App() {
             <Route path="complaints" element={<WardenComplaints />} />
             <Route path="leaves" element={<WardenLeaves />} />
             <Route path="rooms" element={<ManageRooms />} />
+            <Route path="heatmap" element={<RoomHeatmap />} />
             <Route path="info" element={<WardenInfo />} />
           </Route>
 

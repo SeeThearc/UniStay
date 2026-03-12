@@ -2,7 +2,7 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, DoorOpen, MessageSquare,
   Calendar, IndianRupee, Home, Shield, GraduationCap,
-  HardHat, LogOut, BadgeInfo
+  HardHat, LogOut, BadgeInfo, Map
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -37,6 +37,7 @@ const Sidebar = () => {
       { path: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
       { path: '/admin/users', icon: Users, label: 'Users' },
       { path: '/admin/rooms', icon: DoorOpen, label: 'Rooms' },
+      { path: '/admin/heatmap', icon: Map, label: 'Heatmap' },
       { path: '/admin/complaints', icon: MessageSquare, label: 'Complaints' },
       { path: '/admin/leaves', icon: Calendar, label: 'Leaves' },
       { path: '/admin/fees', icon: IndianRupee, label: 'Fees' },
@@ -46,6 +47,7 @@ const Sidebar = () => {
       { path: '/warden/complaints', icon: MessageSquare, label: 'Complaints' },
       { path: '/warden/leaves', icon: Calendar, label: 'Leaves' },
       { path: '/warden/rooms', icon: DoorOpen, label: 'Rooms' },
+      { path: '/warden/heatmap', icon: Map, label: 'Heatmap' },
       { path: '/warden/info', icon: BadgeInfo, label: 'Info' },
     ];
     if (user?.role === 'student') return [

@@ -14,6 +14,7 @@ import complaintRoutes from './routes/complaintRoutes.js';
 import feeRoutes from './routes/feeRoutes.js';
 import leaveRoutes from './routes/leaveRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
 
 // Connect to database
 connectDB();
@@ -40,6 +41,7 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/fees', feeRoutes);
 app.use('/api/leaves', leaveRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Error handling
 app.use(notFound);

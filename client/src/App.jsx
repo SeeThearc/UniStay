@@ -15,6 +15,7 @@ import ManageFees from './pages/admin/ManageFees';
 import ViewComplaints from './pages/admin/ViewComplaints';
 import ViewLeaves from './pages/admin/ViewLeaves';
 import RoomHeatmap from './pages/admin/RoomHeatmap';
+import AIAssistant from './pages/admin/AIAssistant';
 
 // Warden Pages
 import WardenDashboard from './pages/warden/WardenDashboard';
@@ -72,6 +73,7 @@ function App() {
             <Route path="complaints" element={<ViewComplaints />} />
             <Route path="leaves" element={<ViewLeaves />} />
             <Route path="fees" element={<ManageFees />} />
+            <Route path="ai" element={<AIAssistant />} />
           </Route>
 
           {/* Warden Routes */}
@@ -89,6 +91,7 @@ function App() {
             <Route path="rooms" element={<ManageRooms />} />
             <Route path="heatmap" element={<RoomHeatmap />} />
             <Route path="info" element={<WardenInfo />} />
+            <Route path="ai" element={<AIAssistant />} />
           </Route>
 
           {/* Student Routes */}

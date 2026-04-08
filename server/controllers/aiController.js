@@ -5,13 +5,13 @@ import Fee from '../models/Fee.js';
 import Leave from '../models/Leave.js';
 import { extractIntent, formatAnswer } from '../utils/geminiService.js';
 
-// ── safe field whitelists ────────────────────────────────────────────────────
+// ── safe field whitelists ───────────────────────────────────────────────────
 const SAFE_FIELDS = {
-  users:      'name email studentId phoneNumber role isActive roomAssigned',
-  rooms:      'roomNumber block floor capacity status occupants rentPerBed amenities',
+  users: 'name email studentId phoneNumber role isActive roomAssigned',
+  rooms: 'roomNumber block floor capacity status occupants rentPerBed amenities',
   complaints: 'ticketId title category status priority studentId createdAt resolvedAt',
-  fees:       'studentId totalFee amountPaid remainingDues status semester dueDate',
-  leaves:     'studentId fromDate toDate reason status leaveType numberOfDays',
+  fees: 'studentId totalFee amountPaid remainingDues status semester dueDate',
+  leaves: 'studentId fromDate toDate reason status leaveType numberOfDays',
 };
 
 const MODELS = { users: User, rooms: Room, complaints: Complaint, fees: Fee, leaves: Leave };
@@ -21,12 +21,12 @@ const buildFilter = (filters = {}, collection) => {
   const f = {};
   if (!filters) return f;
 
-  if (filters.role)       f.role      = filters.role;
-  if (filters.status)     f.status    = filters.status;
-  if (filters.priority)   f.priority  = filters.priority;
-  if (filters.category)   f.category  = filters.category;
-  if (filters.leaveType)  f.leaveType = filters.leaveType;
-  if (filters.block)      f.block     = filters.block;
+  if (filters.role) f.role = filters.role;
+  if (filters.status) f.status = filters.status;
+  if (filters.priority) f.priority = filters.priority;
+  if (filters.category) f.category = filters.category;
+  if (filters.leaveType) f.leaveType = filters.leaveType;
+  if (filters.block) f.block = filters.block;
   if (filters.floor != null && !isNaN(filters.floor)) f.floor = Number(filters.floor);
   if (filters.isActive != null) f.isActive = Boolean(filters.isActive);
 
@@ -48,11 +48,11 @@ const runQuery = async (intent) => {
   const Model = MODELS[collection];
   if (!Model) throw new Error(`Unknown collection: ${collection}`);
 
-  const filter   = buildFilter(filters, collection);
+  const filter = buildFilter(filters, collection);
   const safeFields = SAFE_FIELDS[collection];
-  const safeLimit  = Math.min(Number(limit) || 10, 20);
-  const sortDir    = sortOrder === 'asc' ? 1 : -1;
-  const sortField  = sortBy || 'createdAt';
+  const safeLimit = Math.min(Number(limit) || 10, 20);
+  const sortDir = sortOrder === 'asc' ? 1 : -1;
+  const sortField = sortBy || 'createdAt';
 
   // ── COUNT ──
   if (queryType === 'count') {

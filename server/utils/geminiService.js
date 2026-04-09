@@ -59,10 +59,21 @@ Return this exact shape:
 User question: "${question}"
 `;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text().trim();
+  let result;
+  try {
+    result = await model.generateContent(prompt);
+  } catch (apiErr) {
+    // Log the full SDK error so it appears in server console
+    console.error('🔴 Gemini API call failed:', JSON.stringify(apiErr, Object.getOwnPropertyNames(apiErr)));
+    throw new Error(`Gemini API error: ${apiErr.message}`);
+  }
 
-  // Robustly extract the first {...} JSON object regardless of surrounding text
+  let text = result.response.text().trim();
+
+  // Strip markdown code fences if Gemini wraps the JSON (e.g. ```json ... ```)
+  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+  // Extract the first {...} JSON object regardless of any remaining surrounding text
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
     console.error('Gemini raw response (no JSON found):', text.substring(0, 500));
